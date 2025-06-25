@@ -1,4 +1,4 @@
-use rust_api_integrator::{define_http_routes, http::client::BearerToken};
+use rust_api_kit::{define_http_routes, http::client::BearerToken};
 
 use crate::request::{AuthenticatedUnexpectedErrorResponse, GetMessagesErrorResponse, GetMessagesRequest, GetMessagesResponse, GetUsersErrorResponse, GetUsersRequest, GetUsersResponse, LoginErrorResponse, LoginRequest, LoginResponse, UnexpectedErrorResponse};
 
