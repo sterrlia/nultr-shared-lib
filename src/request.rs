@@ -1,13 +1,15 @@
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
+
+pub type Identifier = i32;
+pub type UuidIdentifier = uuid::Uuid;
 
 #[derive(Serialize, Deserialize)]
 pub struct GetUsersRequest {}
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct UserResponse {
-    pub id: i32,
+    pub id: Identifier,
     pub username: String,
 }
 
@@ -19,7 +21,7 @@ pub enum GetUsersErrorResponse {}
 
 #[derive(Serialize, Deserialize)]
 pub struct GetMessagesRequest {
-    pub user_id: i32,
+    pub room_id: Identifier,
     // :TODO: serde flatten does not work
     pub page: u64,
     pub page_size: u64,
@@ -27,10 +29,41 @@ pub struct GetMessagesRequest {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct MessageResponse {
-    pub id: Uuid,
-    pub user_id: i32,
+    pub uuid: UuidIdentifier,
+    pub user_id: Identifier,
     pub content: String,
     pub created_at: NaiveDateTime,
+    pub read: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct CreatePrivateRoomRequest {
+    pub receiver_user_id: Identifier,
+    pub name: Option<String>,
+}
+
+pub type CreatePrivateRoomResponse = RoomResponse;
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum CreatePrivateRoomErrorResponse {
+    UserNotFound,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct GetRoomsRequest {}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct RoomResponse {
+    pub id: Identifier,
+    pub name: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct GetRoomsResponse(pub Vec<RoomResponse>);
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum GetRoomsErrorResponse {
+    UserNotFound,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -38,7 +71,8 @@ pub struct GetMessagesResponse(pub Vec<MessageResponse>);
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum GetMessagesErrorResponse {
-    UserNotFound,
+    RoomNotFound,
+    NotMemberOfRoom,
     AccessDenied,
 }
 
@@ -50,7 +84,7 @@ pub struct LoginRequest {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct LoginResponse {
-    pub user_id: i32,
+    pub user_id: Identifier,
     pub token: String,
 }
 
@@ -63,28 +97,38 @@ pub enum LoginErrorResponse {
 #[serde(tag = "type")]
 pub enum WsRequest {
     Message(WsMessageRequest),
+    MessagesRead(WsMarkMessagesReadRequest),
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct WsMarkMessagesReadRequest {
+    pub room_id: Identifier,
+    pub message_uuids: Vec<UuidIdentifier>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct WsMessageResponse {
-    pub id: Uuid,
-    pub user_id: i32,
+    pub uuid: UuidIdentifier,
+    pub user_id: Identifier,
     pub content: String,
     pub created_at: NaiveDateTime,
 }
 
+pub type WsMessagesReadResponse = WsMarkMessagesReadRequest;
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct WsMessageRequest {
-    pub id: Uuid,
-    pub user_id: i32,
+    pub uuid: UuidIdentifier,
+    pub room_id: Identifier,
     pub content: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-#[serde(tag = "type")]
+#[serde(tag = "type", content = "data")]
 pub enum WsOkResponse {
     Message(WsMessageResponse),
-    MessageSent,
+    MessagesRead(WsMessagesReadResponse),
+    MessageReceived(UuidIdentifier),
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -93,6 +137,8 @@ pub enum WsErrorResponse {
     WrongFormat,
     WrongJsonFormat,
     UserNotFound,
+    NotMemberOfRoom,
+    MessageNotFound(UuidIdentifier),
     Fatal,
 }
 
@@ -113,7 +159,7 @@ pub type AuthToken = String;
 
 #[derive(Debug, Clone)]
 pub struct AuthUserData {
-    pub user_id: i32,
+    pub user_id: Identifier,
     pub token: AuthToken,
 }
 
@@ -129,4 +175,3 @@ pub enum AuthenticatedUnexpectedErrorResponse {
 pub enum UnexpectedErrorResponse {
     InternalServerError,
 }
-

@@ -17,4 +17,4 @@ tokio = "1.45.1"
 tracing = "0.1.41"
 url = { version = "2.5.4", features = ["std", "serde"] }
 uuid = { version = "1.17.0", features = ["v4", "serde"] }
-rust-api-kit = { path = "../rust-api-kit" }
+rust-api-kit = "0.1.1"

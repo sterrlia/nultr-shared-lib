@@ -18,17 +18,13 @@ impl From<Result<WsOkResponse, WsErrorResponse>> for WsResponse {
 }
 
 impl From<anyhow::Error> for UnexpectedErrorResponse {
-    fn from(value: anyhow::Error) -> Self {
-        tracing::error!("Unexpected error: {:?}", value);
-
+    fn from(_: anyhow::Error) -> Self {
         UnexpectedErrorResponse::InternalServerError
     }
 }
 
 impl From<anyhow::Error> for AuthenticatedUnexpectedErrorResponse {
-    fn from(value: anyhow::Error) -> Self {
-        tracing::error!("Unexpected error: {:?}", value);
-
+    fn from(_: anyhow::Error) -> Self {
         AuthenticatedUnexpectedErrorResponse::InternalServerError
     }
 }
